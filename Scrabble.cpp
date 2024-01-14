@@ -4,7 +4,7 @@
 #include <ctime>
 using namespace std;
 
-const constexpr char* FILE_NAME = "D:\words.txt";
+const constexpr char* PATH_TO_DICTIONARY = "D:\words.txt";
 const constexpr int MAX_INPUT = 100;
 
 void fillArrWithZeros(int arr[], size_t size)
@@ -99,6 +99,22 @@ int myStrcmp(const char* first, const char* second)
 	return (*first - *second);
 }
 
+unsigned myStrLenght(const char* str)
+{
+	if (!str)
+		return 0;
+
+	unsigned count = 0;
+
+	while (*str)
+	{
+		count++;
+		str++;		
+	}
+
+	return count;
+}
+
 bool isWordInDictionary(char** dictionary, const char* word, unsigned sizeOfDictionary)
 {
 	if (!word)
@@ -132,12 +148,17 @@ bool isWordInDictionary(char** dictionary, const char* word, unsigned sizeOfDict
 
 int random()
 {	
-	return (rand() % 25 + 1);
+	return (rand() % 26);
 }
 
-char getLetter(unsigned index)
+char getLetter(const unsigned index)
 {
 	return 'a' + index;
+}
+
+unsigned getIndexByLetter(const char letter)
+{
+	return letter - 'a';
 }
 
 char* generateRandomLetters(int countOfLetters, int countingArr[])
@@ -149,7 +170,7 @@ char* generateRandomLetters(int countOfLetters, int countingArr[])
 	for (unsigned i = 0; i < countOfLetters; i++)
 	{
 		int index = random();
-		countingArr[index - 1]++; //count the letter that are print
+		countingArr[index]++; //count of every letter that is print
 		str[i] = getLetter(index);		
 	}
 
@@ -168,15 +189,16 @@ bool isValidWord(const char* word, int countingArr[], size_t size)
 
 	while (*word)
 	{		
-		count['a' - *word]++;
+		unsigned index = getIndexByLetter(*word);
+		count[index]++;
 		word++;
 	}
 
-	for (unsigned i = 0; i < 10; i++)
+	for (unsigned i = 0; i < size; i++)
 	{
 		if (count[i])
 		{
-			if (count[i] != countingArr[i])
+			if (count[i] > countingArr[i])
 				return false;
 		}
 	}
@@ -184,31 +206,103 @@ bool isValidWord(const char* word, int countingArr[], size_t size)
 	return true;
 }
 
-int main()
+void printGameLetters(const char* str)
+{
+	if (!str)
+		return;
+
+	unsigned strLenght = myStrLenght(str);
+
+	for (unsigned i = 0; i < strLenght; i++)
+	{
+		cout << str[i] << " ";
+	}
+
+	cout << endl;
+}
+
+void beginNewGame()
 {
 	char** dictionary;
 	unsigned sizeOfDictionary;
 
-	unsigned rounds = 10;	
+	unsigned rounds = 10;
 
-	constexpr size_t size = 26;
-	int countingArr[size];
+	constexpr size_t letters = 26;
+	int countingArr[letters];
 
-	readWords(FILE_NAME, dictionary, sizeOfDictionary);
-	fillArrWithZeros(countingArr, size);	
+	readWords(PATH_TO_DICTIONARY, dictionary, sizeOfDictionary);
+	fillArrWithZeros(countingArr, letters);
 
 	char* gameLetters = generateRandomLetters(10, countingArr);
-	while (rounds)
+
+	unsigned points = 0;
+
+	unsigned i = 1;
+	while (i <= rounds)
 	{
-		cout << gameLetters << endl;
+		cout << "Round " << i << ". Available letters: ";
+		printGameLetters(gameLetters);
 
 		char inputWord[MAX_INPUT];
 		cin >> inputWord;
 
-		if (isValidWord(inputWord, countingArr, size) && isWordInDictionary(dictionary, inputWord, sizeOfDictionary))
+		if (isValidWord(inputWord, countingArr, letters) && isWordInDictionary(dictionary, inputWord, sizeOfDictionary))
 		{
-			rounds--;
-			gameLetters = generateRandomLetters(10, countingArr);
+			points += myStrLenght(inputWord);
 		}
+		else
+		{
+			cout << "Invalid word." << endl;
+		}
+
+		fillArrWithZeros(countingArr, letters);
+		gameLetters = generateRandomLetters(10, countingArr);
+
+		i++;
 	}
+
+	cout << "Your total points are " << points << "." << endl;
+}
+
+void settings() {}
+
+void addWordToDictionary() {}
+
+int main()
+{
+	bool validInput = false;
+	while (!validInput)
+	{
+		cout << "1. Begin a new game" << endl
+			<< "2. Settings" << endl
+			<< "   a. Change the count of letters" << endl
+			<< "   b. Change the count of rounds" << endl
+			<< "3. Add a new word to the dictionary" << endl
+			<< "4. Exit" << endl;
+
+		unsigned choise = 1;
+		cin >> choise;
+
+		switch (choise)
+		{
+		case 1:
+			beginNewGame();
+			validInput = true;
+			break;
+		case 2:
+			settings();
+			validInput = true;
+			break;
+		case 3:
+			addWordToDictionary();
+			validInput = true;
+			break;
+		case 4:
+			return 0;
+			break;
+		default:
+			cout << "Please, choose valid choise from the menu!" << endl;
+		}
+	}	
 }
