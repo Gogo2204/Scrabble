@@ -21,21 +21,20 @@ void fillArrWithZeros(int arr[], size_t size)
 unsigned linesInFile(const char* fileName)
 {
 	if (!fileName)
-		return 1;
+		return 0;
 
 	ifstream MyFile(fileName);
 
 	if (!MyFile.is_open())
-		return 1;
+		return 0;
 
 	unsigned lines = 0;
-	
-	constexpr size_t size = 100;
-	char str[size];
+
+	char str[MAX_INPUT];
 
 	while (!MyFile.eof())
 	{
-		MyFile.getline(str, size);
+		MyFile.getline(str, MAX_INPUT);
 		lines++;		
 	}
 
@@ -66,28 +65,6 @@ void freeMatrix(char** matrix, unsigned rows)
 	delete[] matrix;
 }
 
-void readWords(const char* fileName, char**& words, unsigned& rows)
-{
-	if (!fileName)
-		return;
-
-	rows = linesInFile(fileName);
-	constexpr size_t colls = 100;
-	words = createMatrix(rows, colls);
-
-	ifstream MyFile(fileName);
-
-	if (!MyFile.is_open())
-		return;	
-
-	for (unsigned i = 0; i < rows; i++)
-	{
-		MyFile.getline(words[i], colls);		
-	}
-
-	MyFile.close();	
-}
-
 int myStrcmp(const char* first, const char* second)
 {
 	if (!first || !second)
@@ -112,10 +89,28 @@ unsigned myStrLenght(const char* str)
 	while (*str)
 	{
 		count++;
-		str++;		
+		str++;
 	}
 
 	return count;
+}
+
+void readWords(const char* fileName, char** words, unsigned rows, unsigned colls)
+{
+	if (!fileName)
+		return;	
+
+	ifstream MyFile(fileName);
+
+	if (!MyFile.is_open())
+		return;	
+
+	for (unsigned i = 0; i < rows; i++)
+	{
+		MyFile.getline(words[i], colls);		
+	}
+
+	MyFile.close();	
 }
 
 bool isWordInDictionary(char** dictionary, const char* word, unsigned sizeOfDictionary)
@@ -164,11 +159,9 @@ unsigned getIndexByLetter(const char letter)
 	return letter - 'a';
 }
 
-char* generateRandomLetters(int countOfLetters, int countingArr[])
+void generateRandomLetters(char* str, int countOfLetters, int countingArr[])
 {
-	srand(time(0));	
-
-	char* str = new char[countOfLetters];
+	srand(time(0));		
 
 	for (unsigned i = 0; i < countOfLetters; i++)
 	{
@@ -177,9 +170,22 @@ char* generateRandomLetters(int countOfLetters, int countingArr[])
 		str[i] = getLetter(index);		
 	}
 
-	str[countOfLetters] = '\0';
+	str[countOfLetters] = '\0';	
+}
 
-	return str;
+bool areSmallLetters(const char* str)
+{
+	if (!str)
+		return 0;
+
+	while (*str)
+	{
+		if (!(*str >= 'a' && *str <= 'z'))
+			return false;
+		str++;
+	}
+
+	return true;
 }
 
 bool isValidWord(const char* word, int countingArr[], size_t size)
@@ -225,15 +231,15 @@ void printGameLetters(const char* str)
 	cout << endl;
 }
 
-int readFromSettingFile(const char* fileName, int* settings, size_t size)
+void readFromSettingFile(const char* fileName, int* settings, size_t size)
 {
 	if (!fileName)
-		return 0;
+		return;
 
 	ifstream MyFile(fileName);
 
 	if (!MyFile.is_open())
-		return 0;
+		return;
 
 	for (unsigned i = 0; i < size; i++)
 	{
@@ -329,10 +335,10 @@ void settings()
 
 void beginNewGame()
 {
-	char** dictionary;
-	unsigned sizeOfDictionary;
+	unsigned rowsInDictionary = linesInFile(PATH_TO_DICTIONARY);	
+	char** dictionary = createMatrix(rowsInDictionary, MAX_INPUT);
 
-	constexpr size_t countOfSettings = 2;
+	constexpr size_t countOfSettings = 2; //we have two criteria(count of game letters and rounds) by which the game is defined
 	int settings[countOfSettings];
 	readFromSettingFile(PATH_TO_GAME_SETTINGS, settings, countOfSettings);
 
@@ -342,10 +348,13 @@ void beginNewGame()
 	constexpr size_t letters = 26; //letters in EN alphabet
 	int countingArr[letters];
 
-	readWords(PATH_TO_DICTIONARY, dictionary, sizeOfDictionary);
+	readWords(PATH_TO_DICTIONARY, dictionary, rowsInDictionary, MAX_INPUT);
 	fillArrWithZeros(countingArr, letters);
+	
+	char* gameLetters = new char[countOfGameLetters + 1];
+	generateRandomLetters(gameLetters, countOfGameLetters, countingArr);
 
-	char* gameLetters = generateRandomLetters(countOfGameLetters, countingArr);
+	char* inputWord = new char[countOfGameLetters];
 
 	unsigned points = 0;
 
@@ -354,11 +363,11 @@ void beginNewGame()
 	{
 		cout << "Round " << i << ". Available letters: ";
 		printGameLetters(gameLetters);
-
-		char inputWord[MAX_INPUT];
+		
 		cin >> inputWord;
 
-		if (isValidWord(inputWord, countingArr, letters) && isWordInDictionary(dictionary, inputWord, sizeOfDictionary))
+		if (myStrLenght(inputWord) <= countOfGameLetters && areSmallLetters(inputWord) 
+			&& isValidWord(inputWord, countingArr, letters) && isWordInDictionary(dictionary, inputWord, rowsInDictionary))
 		{
 			points += myStrLenght(inputWord);
 		}
@@ -368,12 +377,16 @@ void beginNewGame()
 		}
 
 		fillArrWithZeros(countingArr, letters);
-		gameLetters = generateRandomLetters(countOfGameLetters, countingArr);
+		generateRandomLetters(gameLetters, countOfGameLetters, countingArr);
 
 		i++;
 	}
 
 	cout << "Your total points are " << points << "." << endl;
+
+	freeMatrix(dictionary, rowsInDictionary);	
+	delete[] gameLetters;
+	delete[] inputWord;
 }
 
 void addWordToDictionary() {}
