@@ -5,7 +5,10 @@
 using namespace std;
 
 const constexpr char* PATH_TO_DICTIONARY = "D:\words.txt";
+const constexpr char* PATH_TO_GAME_SETTINGS = "D:\settings.txt";
 const constexpr int MAX_INPUT = 100;
+const constexpr int MIN_ROUNDS = 3;
+const constexpr int MAX_ROUNDS = 30;
 
 void fillArrWithZeros(int arr[], size_t size)
 {
@@ -170,7 +173,7 @@ char* generateRandomLetters(int countOfLetters, int countingArr[])
 	for (unsigned i = 0; i < countOfLetters; i++)
 	{
 		int index = random();
-		countingArr[index]++; //count of every letter that is print
+		countingArr[index]++; //count of every game generated letter 
 		str[i] = getLetter(index);		
 	}
 
@@ -184,7 +187,8 @@ bool isValidWord(const char* word, int countingArr[], size_t size)
 	if (!word)
 		return 0;
 
-	int count[26];
+	constexpr size_t letters = 26; //letters in EN alphabet
+	int count[letters];
 	fillArrWithZeros(count, size);
 
 	while (*word)
@@ -221,20 +225,127 @@ void printGameLetters(const char* str)
 	cout << endl;
 }
 
+int readFromSettingFile(const char* fileName, int* settings, size_t size)
+{
+	if (!fileName)
+		return 0;
+
+	ifstream MyFile(fileName);
+
+	if (!MyFile.is_open())
+		return 0;
+
+	for (unsigned i = 0; i < size; i++)
+	{
+		MyFile >> settings[i];
+	}
+
+	MyFile.close();
+}
+
+void writeInSettingFile(const char* fileName, const int* settings, size_t size)
+{
+	if (!fileName)
+		return;
+
+	ofstream MyFile(fileName);
+
+	if (!MyFile.is_open())
+		return;
+
+	for (unsigned i = 0; i < size; i++)
+	{
+		MyFile << settings[i] << endl;
+	}
+
+	MyFile.close();
+}
+
+void changeGameLettersCount(int* settings, size_t size)
+{
+	readFromSettingFile(PATH_TO_GAME_SETTINGS, settings, size);
+
+	cout << "Please, enter enter new count of game letters! The old one is " << settings[0] << endl;
+	cin >> settings[0];
+
+	while (!(settings[0] >= 1 && settings[0] <= MAX_INPUT))
+	{
+		cout << "Please, enter valid count for the game letters! Consider that the maximum count is 100" << endl;
+		cin >> settings[0];
+	}
+
+	writeInSettingFile(PATH_TO_GAME_SETTINGS, settings, size);
+}
+
+void changeRoundsCount(int* settings, size_t size)
+{
+	readFromSettingFile(PATH_TO_GAME_SETTINGS, settings, size);
+
+	cout << "Please, enter enter new count of rounds! The old one is " << settings[1] << endl;
+	cin >> settings[1];
+
+	while (!(settings[1] >= MIN_ROUNDS && settings[1] <= MAX_ROUNDS))
+	{
+		cout << "Please, enter valid count for the rounds! Consider that the minimum rounds are " << MIN_ROUNDS
+			<< " and the maximum are " << MAX_ROUNDS << endl;
+		cin >> settings[1];
+	}
+
+	writeInSettingFile(PATH_TO_GAME_SETTINGS, settings, size);
+}
+
+void settings()
+{
+	constexpr size_t countOfSettings = 2;
+	int settings[countOfSettings];
+
+	cout << "\n2. Settings" << endl
+		<< "   1. Change the count of letters" << endl
+		<< "   2. Change the count of rounds" << endl
+		<< "Please, choose the setting you would like to change!" << endl;
+
+	bool hasChooen = false;
+	while (!hasChooen)
+	{
+		unsigned choice = 1;
+		cin >> choice;
+
+		switch (choice)
+		{
+		case 1:
+			changeGameLettersCount(settings, countOfSettings);
+			hasChooen = true;
+			break;
+		case 2:
+			changeRoundsCount(settings, countOfSettings);
+			hasChooen = true;
+			break;
+		default:
+			cout << "Please, choose valid choise from the menu!" << endl;
+			break;
+		}
+	}
+}
+
 void beginNewGame()
 {
 	char** dictionary;
 	unsigned sizeOfDictionary;
 
-	unsigned rounds = 10;
+	constexpr size_t countOfSettings = 2;
+	int settings[countOfSettings];
+	readFromSettingFile(PATH_TO_GAME_SETTINGS, settings, countOfSettings);
 
-	constexpr size_t letters = 26;
+	int countOfGameLetters = settings[0];
+	int rounds = settings[1];
+
+	constexpr size_t letters = 26; //letters in EN alphabet
 	int countingArr[letters];
 
 	readWords(PATH_TO_DICTIONARY, dictionary, sizeOfDictionary);
 	fillArrWithZeros(countingArr, letters);
 
-	char* gameLetters = generateRandomLetters(10, countingArr);
+	char* gameLetters = generateRandomLetters(countOfGameLetters, countingArr);
 
 	unsigned points = 0;
 
@@ -257,7 +368,7 @@ void beginNewGame()
 		}
 
 		fillArrWithZeros(countingArr, letters);
-		gameLetters = generateRandomLetters(10, countingArr);
+		gameLetters = generateRandomLetters(countOfGameLetters, countingArr);
 
 		i++;
 	}
@@ -265,19 +376,17 @@ void beginNewGame()
 	cout << "Your total points are " << points << "." << endl;
 }
 
-void settings() {}
-
 void addWordToDictionary() {}
 
 int main()
 {
-	bool validInput = false;
-	while (!validInput)
+	bool isValidInput = true;
+	while (isValidInput)
 	{
 		cout << "1. Begin a new game" << endl
 			<< "2. Settings" << endl
-			<< "   a. Change the count of letters" << endl
-			<< "   b. Change the count of rounds" << endl
+			<< "   1. Change the count of letters" << endl
+			<< "   2. Change the count of rounds" << endl
 			<< "3. Add a new word to the dictionary" << endl
 			<< "4. Exit" << endl;
 
@@ -287,22 +396,20 @@ int main()
 		switch (choise)
 		{
 		case 1:
-			beginNewGame();
-			validInput = true;
+			beginNewGame();			
 			break;
 		case 2:
 			settings();
-			validInput = true;
 			break;
 		case 3:
 			addWordToDictionary();
-			validInput = true;
 			break;
 		case 4:
 			return 0;
 			break;
 		default:
 			cout << "Please, choose valid choise from the menu!" << endl;
+			break;
 		}
 	}	
 }
