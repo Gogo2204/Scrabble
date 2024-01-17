@@ -30,11 +30,11 @@ unsigned linesInFile(const char* fileName)
 
 	unsigned lines = 0;
 
-	MyFile >> lines;
+	MyFile >> lines; //on the first row we store the number of rows in the file
 
 	MyFile.close();
 
-	return lines - 1; //on the first row we store the number of rows in the file
+	return lines;
 }
 
 char** createMatrix(unsigned rows, unsigned colls)
@@ -215,11 +215,8 @@ bool isValidWord(const char* word, int countingArr[], size_t size)
 
 	for (unsigned i = 0; i < size; i++)
 	{
-		if (count[i])
-		{
-			if (count[i] > countingArr[i])
-				return false;
-		}
+		if (count[i] && count[i] > countingArr[i])
+			return false;		
 	}
 
 	return true;
@@ -342,28 +339,9 @@ void settings()
 	}
 }
 
-void putNewWordOnIndex(char** oldDictionary, char** newDictionary, unsigned size, char* newWord, const int index)
+bool writeNewWordInDictionary(const char* fileName, char** dictionary, unsigned rows, unsigned index, const char* newWord)
 {
-	if (!oldDictionary || !newWord)
-		return;
-
-	for (unsigned i = 0, j = 0; i < size - 1; i++, j++)
-	{
-		if (j == index)
-		{
-			myStrcpy(newWord, newDictionary[j]);
-			i--;
-		}
-		else
-		{
-			myStrcpy(oldDictionary[i], newDictionary[j]);
-		}
-	}
-}
-
-bool writeInDictionaryFile(const char* fileName, char** dictionary, unsigned rows)
-{
-	if (!dictionary)
+	if (!dictionary || !newWord)
 		return false;
 
 	ofstream MyFile(fileName);
@@ -371,11 +349,19 @@ bool writeInDictionaryFile(const char* fileName, char** dictionary, unsigned row
 	if (!MyFile.is_open())
 		return false;
 
-	MyFile << rows << endl;
+	MyFile << rows << endl;	
 
-	for (unsigned i = 1; i < rows; i++)
+	for (unsigned i = 1, j = 1; i < rows - 1; i++, j++)
 	{
-		MyFile << dictionary[i] << endl;
+		if (j != index)
+		{
+			MyFile << dictionary[i] << endl;			
+		}
+		else
+		{
+			MyFile << newWord << endl;
+			i--;
+		}		
 	}
 
 	MyFile.close();
@@ -440,23 +426,19 @@ void addWordToDictionary()
 		}
 	}
 
-	int index = findIndexOfNewWord(dictionary, rowsInDictionary, newWord);
-	char** newDictionary = createMatrix(rowsInDictionary + 1, MAX_INPUT);
+	int index = findIndexOfNewWord(dictionary, rowsInDictionary, newWord);			
 
-	putNewWordOnIndex(dictionary, newDictionary, rowsInDictionary + 1, newWord, index);
+	if (writeNewWordInDictionary(PATH_TO_DICTIONARY, dictionary, rowsInDictionary + 1, index, newWord))
+		cout << "You added the word " << newWord << " successfully" << endl;	
 
 	freeMatrix(dictionary, rowsInDictionary);
-
-	if (writeInDictionaryFile(PATH_TO_DICTIONARY, newDictionary, rowsInDictionary + 1))
-		cout << "You added the word " << newWord << " successfully" << endl;
-
-	freeMatrix(newDictionary, rowsInDictionary + 1);
 }
 
 void beginNewGame()
 {
 	unsigned rowsInDictionary = linesInFile(PATH_TO_DICTIONARY);	
-	char** dictionary = createMatrix(rowsInDictionary, MAX_INPUT);		
+	char** dictionary = createMatrix(rowsInDictionary, MAX_INPUT);			
+
 
 	constexpr size_t countOfSettings = 2; //we have two criteria(count of game letters and rounds) by which the game is defined
 	int settings[countOfSettings];
