@@ -509,7 +509,7 @@ void gamePlay(char** dictionary, unsigned rowsInDictionary, char* gameLetters,
 		i++;
 	}
 
-	cout << "\nYour total points are " << points << "." << endl;
+	cout << "\nGame over! Your total points are " << points << "." << endl;
 
 	delete[] inputWord;
 }
