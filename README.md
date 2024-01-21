@@ -1,4 +1,4 @@
-<h>Scrabble</h>
+<b>Scrabble</b>
 
 Scrabble is a word game that involves players using letter tiles to create words.
 
