@@ -198,6 +198,7 @@ bool isWordInDictionary(char** dictionary, const char* word, unsigned sizeOfDict
 	if (!word || !dictionary)
 		return 0;
 
+	//using binary search to check if a word is in the dictionary
 	unsigned leftIndex = 0;
 	unsigned rightIndex = sizeOfDictionary - 1;
 
@@ -224,7 +225,7 @@ bool isWordInDictionary(char** dictionary, const char* word, unsigned sizeOfDict
 	return 0;
 }
 
-bool isValidWord(const char* word, int* countGameLetters, size_t size)
+bool isSubsetOfGameLetters(const char* word, int* countGameLetters, size_t size)
 {
 	if (!word)
 		return 0;
@@ -390,6 +391,7 @@ int findIndexOfNewWord(char** dictionary, unsigned rows, const char* newWord)
 	if (!newWord || !dictionary)
 		return 0;
 
+	//using binary search to find the index on which should be the new word
 	unsigned leftIndex = 0;
 	unsigned rightIndex = rows - 1;
 
@@ -402,7 +404,7 @@ int findIndexOfNewWord(char** dictionary, unsigned rows, const char* newWord)
 
 		if (cmp1 < 0 && cmp2 > 0)
 		{
-			return mid + 1;
+			return mid + 1; // the index is mid + 1, because the new word is 'smaller' than the word on position mid
 		}
 		else if (cmp1 < 0 && cmp2 < 0)
 		{
@@ -491,7 +493,7 @@ void gamePlay(char** dictionary, unsigned rowsInDictionary, char* gameLetters,
 		cin >> setw(static_cast <streamsize> (countOfGameLetters) + 1) >> inputWord;
 		cin.ignore(numeric_limits<streamsize>::max(), '\n');
 
-		if (areLowerLetters(inputWord) && isValidWord(inputWord, countGameLetters, letters)
+		if (areLowerLetters(inputWord) && isSubsetOfGameLetters(inputWord, countGameLetters, letters)
 			&& isWordInDictionary(dictionary, inputWord, rowsInDictionary))
 		{
 			points += myStrLenght(inputWord);
